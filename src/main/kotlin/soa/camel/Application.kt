@@ -30,10 +30,15 @@ class SearchController(private val producerTemplate: ProducerTemplate) {
     @RequestMapping("/")
     fun index() = "index"
 
+
+    // Hay que tokenizar y hacer que max:n se traduzca a un parametro del path count:n
     @RequestMapping(value = ["/search"])
     @ResponseBody
-    fun search(@RequestParam("q") q: String?): Any =
-        producerTemplate.requestBodyAndHeader(DIRECT_ROUTE, "mandalorian", "keywords", q)
+    fun search(@RequestParam("q") q: String?): Any {
+        val qfmt = q?.replace("max:", "?count=")
+
+        return producerTemplate.requestBodyAndHeader(DIRECT_ROUTE, "mandalorian", "keywords", qfmt)
+    }
 }
 
 @Component
