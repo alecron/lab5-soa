@@ -35,9 +35,7 @@ class SearchController(private val producerTemplate: ProducerTemplate) {
     @RequestMapping(value = ["/search"])
     @ResponseBody
     fun search(@RequestParam("q") q: String?): Any {
-        val qfmt = q?.replace("max:", "?count=")
-
-        return producerTemplate.requestBodyAndHeader(DIRECT_ROUTE, "mandalorian", "keywords", qfmt)
+        return producerTemplate.requestBodyAndHeader(DIRECT_ROUTE, "mandalorian", "keywords", q)
     }
 }
 
@@ -48,6 +46,11 @@ class Router(meterRegistry: MeterRegistry) : RouteBuilder() {
 
     override fun configure() {
         from(DIRECT_ROUTE)
+                .process { exchange ->
+                    val q = exchange.getIn().getHeader("keywords") as String
+                    val qfmt = q.replace("max:", "?count=")
+                    exchange.getIn().setHeader("keywords", qfmt)
+                }
             .toD("twitter-search:\${header.keywords}")
             .wireTap(LOG_ROUTE)
             .wireTap(COUNT_ROUTE)
